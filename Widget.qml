@@ -395,14 +395,16 @@ Panel {
                   text: modelData.label
                   color: root.dim
                   font.family: root.fontFamily
-                  font.pixelSize: Style.font.caption
+                  font.pixelSize: Style.font.bodySmall
                 }
 
+                // The percentages are the reason the panel is open; the labels
+                // only name them.
                 Text {
                   text: root.batteryText(modelData.key)
                   color: root.foreground
                   font.family: root.fontFamily
-                  font.pixelSize: Style.font.body
+                  font.pixelSize: Style.font.title
                 }
               }
             }
