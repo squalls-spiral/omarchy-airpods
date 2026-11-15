@@ -55,15 +55,33 @@ EAR_STATES = {0x00: "in_ear", 0x01: "out_of_ear", 0x02: "in_case", 0x03: "discon
 
 
 def connected_address():
-    """MAC of the first connected AirPods, or None."""
+    """MAC of the first connected AirPods, or None.
+
+    The name is the user's choice — a pair called "JAAP" is still an AirPods —
+    so a name match alone misses renamed devices. Fall back to BlueZ's own
+    facts: Apple's vendor id in the Device Information modalias together with
+    an audio sink, which is what an AirPods publishes and a Magic Keyboard
+    does not.
+    """
     out = subprocess.run(
         ["bluetoothctl", "devices", "Connected"],
         capture_output=True, text=True,
     ).stdout
+    candidates = []
     for line in out.splitlines():
         parts = line.split(None, 2)
-        if len(parts) == 3 and "airpods" in parts[2].lower():
-            return parts[1]
+        if len(parts) == 3:
+            candidates.append((parts[1].replace("\x1b", "").strip(), parts[2]))
+    for address, name in candidates:
+        if "airpods" in name.lower():
+            return address
+    for address, _ in candidates:
+        info = subprocess.run(
+            ["bluetoothctl", "info", address],
+            capture_output=True, text=True,
+        ).stdout.lower()
+        if "v004c" in info and "audio sink" in info:
+            return address
     return None
 
 
