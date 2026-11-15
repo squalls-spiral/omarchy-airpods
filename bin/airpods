@@ -22,6 +22,7 @@
 #   airpods selftest                            parse check, no Bluetooth
 import json
 import os
+import re
 import select
 import socket
 import subprocess
@@ -29,6 +30,7 @@ import sys
 import time
 
 PSM = 0x1001
+ANSI = re.compile(r"\x1b\[[0-9;]*m")
 # Abstract socket: exactly one copy binds it, and it owns the channel.
 LOCK = "\0omarchy-airpods"
 HEADER = bytes([0x04, 0x00, 0x04, 0x00])
@@ -44,7 +46,7 @@ MODEL_NAMES = {
     "A2031": "AirPods 2", "A2032": "AirPods 2",
     "A2564": "AirPods 3", "A2565": "AirPods 3",
     "A3050": "AirPods 4", "A3053": "AirPods 4", "A3054": "AirPods 4",
-    "A3055": "AirPods 4 (ANC)", "A3056": "AirPods 4 (ANC)", "A3057": "AirPods 4 (ANC)",
+    "A3055": "AirPods 4", "A3056": "AirPods 4", "A3057": "AirPods 4",
     "A2083": "AirPods Pro", "A2084": "AirPods Pro",
     "A2698": "AirPods Pro 2", "A2699": "AirPods Pro 2", "A2931": "AirPods Pro 2",
     "A3047": "AirPods Pro 2", "A3048": "AirPods Pro 2", "A3049": "AirPods Pro 2",
@@ -145,6 +147,23 @@ def parse(packet, state):
             state[TOGGLES[identifier]] = TOGGLE_STATES.get(payload[3])
         elif identifier == ADAPTIVE_LEVEL:
             state["adaptive_level"] = payload[3]
+
+
+def device_alias(address):
+    """The name this host knows the device by.
+
+    BlueZ keeps two: Name is what the buds call themselves, Alias is what the
+    user renamed them to here. The alias is the one a reader recognises.
+    """
+    out = subprocess.run(
+        ["bluetoothctl", "info", address],
+        capture_output=True, text=True,
+    ).stdout
+    for line in out.splitlines():
+        plain = ANSI.sub("", line)
+        if "Alias:" in plain:
+            return plain.split("Alias:", 1)[1].strip() or None
+    return None
 
 
 def open_channel(address):
@@ -265,6 +284,7 @@ def own(server):
                 sock.send(NOTIFICATIONS)
                 sock.settimeout(None)
                 state = {"connected": True, "address": address, "name": None,
+                         "alias": device_alias(address),
                          "model": None, "model_name": None, "mode": None, "battery": {}, "charging": {},
                          "ear": None, "ca": None, "onebud": None, "adaptive_level": None}
                 while True:

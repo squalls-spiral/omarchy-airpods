@@ -112,7 +112,9 @@ Panel {
     connected = data.connected === true
     address = connected ? (data.address || "") : ""
     mode = connected ? (data.mode || "") : ""
-    deviceName = connected ? (data.name || "") : ""
+    // The alias is the name this host was told to use; the buds' own name only
+    // fills in when the pair has never been renamed here.
+    deviceName = connected ? (data.alias || data.name || "") : ""
     model = connected ? (data.model || "") : ""
     modelName = connected ? (data.model_name || "") : ""
     battery = connected && data.battery ? data.battery : ({})
@@ -317,12 +319,12 @@ Panel {
 
         PanelHero {
           width: parent.width
-          title: root.deviceName || "AirPods"
           // The name the pair was given, then the family it belongs to, then the
           // model number underneath — the number alone says nothing to a reader.
-          meta: root.connected
-            ? [root.modelName, root.model].filter(s => s !== "").join("\n")
-            : "Not connected"
+          title: root.connected
+            ? ([root.deviceName, root.modelName].filter(s => s !== "").join(" ") || "AirPods")
+            : (root.deviceName || "AirPods")
+          meta: root.connected ? root.model : "Not connected"
           foreground: root.foreground
           fontFamily: root.fontFamily
           iconOpacity: root.connected ? 1.0 : 0.5
