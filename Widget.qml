@@ -93,9 +93,21 @@ Panel {
 
   readonly property bool showsPercent: showBattery && lowestBattery >= 0 && !button.vertical
 
+  // The case only reports while a pod sits in it, so its number is often the
+  // last one the device gave us. Keep it and let the caller dim it, rather than
+  // dropping to a dash that says nothing. It under-reports while the case
+  // charges, which is the harmless direction.
+  property int caseHeld: -1
+
+  readonly property bool caseLive: connected
+    && battery.case !== undefined && battery.case !== null
+
   function batteryText(component) {
     var level = battery ? battery[component] : undefined
-    if (level === undefined || level === null) return "—"
+    if (level === undefined || level === null) {
+      if (component === "case" && caseHeld >= 0) return caseHeld + "%"
+      return "—"
+    }
     // A bolt beside the number, the way the power widget marks the wall.
     // The Nerd Font glyph follows the text color; the emoji stays yellow.
     return charging[component] ? level + "% 󱐋" : level + "%"
@@ -119,6 +131,7 @@ Panel {
     modelName = connected ? (data.model_name || "") : ""
     battery = connected && data.battery ? data.battery : ({})
     charging = connected && data.charging ? data.charging : ({})
+    if (battery.case !== undefined && battery.case !== null) caseHeld = battery.case
     conversationAwareness = connected && data.ca !== undefined ? data.ca : null
     oneBudANC = connected && data.onebud !== undefined ? data.onebud : null
     adaptiveLevel = connected && data.adaptive_level !== undefined ? data.adaptive_level : null
@@ -402,7 +415,10 @@ Panel {
                 // only name them.
                 Text {
                   text: root.batteryText(modelData.key)
-                  color: root.foreground
+                  // A remembered case figure is dimmed: the device is not saying
+                  // this now, it said it when a pod last sat in the case.
+                  color: modelData.key === "case" && !root.caseLive
+                    ? root.dim : root.foreground
                   font.family: root.fontFamily
                   font.pixelSize: Style.font.title
                 }
