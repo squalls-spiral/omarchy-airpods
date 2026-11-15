@@ -13,8 +13,8 @@ import qs.Ui
 // that holds the channel.
 Panel {
   id: root
-  moduleName: "soup.airpods"
-  ipcTarget: "soup.airpods"
+  moduleName: "jomac.airpods"
+  ipcTarget: "jomac.airpods"
 
   // The script ships inside the plugin directory, so the widget works from any
   // checkout path without anything on PATH.
