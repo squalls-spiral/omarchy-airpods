@@ -93,20 +93,25 @@ Panel {
 
   readonly property bool showsPercent: showBattery && lowestBattery >= 0 && !button.vertical
 
-  // The case only reports while a pod sits in it, so its number is often the
-  // last one the device gave us. Keep it and let the caller dim it, rather than
-  // dropping to a dash that says nothing. It under-reports while the case
-  // charges, which is the harmless direction.
+  // A component only reports while it is in use: the case while a pod sits in
+  // it, a pod while the pair still relays it. Keep the last figure each one gave
+  // us and let the caller dim it, rather than dropping to a dash that says
+  // nothing — a pod charging in the case is exactly the one worth watching.
+  property int leftHeld: -1
+  property int rightHeld: -1
   property int caseHeld: -1
 
-  readonly property bool caseLive: connected
-    && battery.case !== undefined && battery.case !== null
+  function componentLive(component) {
+    return connected && battery[component] !== undefined && battery[component] !== null
+  }
 
   function batteryText(component) {
     var level = battery ? battery[component] : undefined
     if (level === undefined || level === null) {
-      if (component === "case" && caseHeld >= 0) return caseHeld + "%"
-      return "—"
+      var held = component === "left" ? leftHeld
+        : component === "right" ? rightHeld
+        : component === "case" ? caseHeld : -1
+      return held >= 0 ? held + "%" : "—"
     }
     // A bolt beside the number, the way the power widget marks the wall.
     // The Nerd Font glyph follows the text color; the emoji stays yellow.
@@ -131,6 +136,8 @@ Panel {
     modelName = connected ? (data.model_name || "") : ""
     battery = connected && data.battery ? data.battery : ({})
     charging = connected && data.charging ? data.charging : ({})
+    if (battery.left !== undefined && battery.left !== null) leftHeld = battery.left
+    if (battery.right !== undefined && battery.right !== null) rightHeld = battery.right
     if (battery.case !== undefined && battery.case !== null) caseHeld = battery.case
     conversationAwareness = connected && data.ca !== undefined ? data.ca : null
     oneBudANC = connected && data.onebud !== undefined ? data.onebud : null
@@ -415,10 +422,9 @@ Panel {
                 // only name them.
                 Text {
                   text: root.batteryText(modelData.key)
-                  // A remembered case figure is dimmed: the device is not saying
-                  // this now, it said it when a pod last sat in the case.
-                  color: modelData.key === "case" && !root.caseLive
-                    ? root.dim : root.foreground
+                  // A remembered figure is dimmed: the device is not saying this
+                  // now, it said it the last time that component reported.
+                  color: root.componentLive(modelData.key) ? root.foreground : root.dim
                   font.family: root.fontFamily
                   font.pixelSize: Style.font.title
                 }
