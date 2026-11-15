@@ -440,6 +440,9 @@ Panel {
         Column {
           width: parent.width
           spacing: Style.space(6)
+          // Local fork: with nothing connected the panel is just the mark and the
+          // state line. The controls below all act on a device that is not there.
+          visible: root.connected
 
           PanelSectionHeader {
             width: parent.width
