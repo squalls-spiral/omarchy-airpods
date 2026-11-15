@@ -34,6 +34,9 @@ Panel {
     setting("earBehavior", "") || (setting("autoPause") === false ? "Never" : "One out")
 
   property bool connected: false
+  // The settings act on the plugin, not on the pods, so they stay reachable with
+  // nothing connected — just folded away behind the cog in the hero.
+  property bool settingsOpen: false
   property string address: ""
   property string mode: ""
   property string deviceName: ""
@@ -320,6 +323,28 @@ Panel {
               color: root.foreground
             }
           }
+          trailingControl: Component {
+            Item {
+              width: Style.space(24)
+              height: Style.space(24)
+
+              Text {
+                anchors.centerIn: parent
+                text: "\u{F0493}"
+                color: Color.accent
+                opacity: root.settingsOpen ? 1.0 : 0.75
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.body * 2
+              }
+
+              MouseArea {
+                anchors.fill: parent
+                anchors.margins: -Style.space(6)
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.settingsOpen = !root.settingsOpen
+              }
+            }
+          }
         }
 
         Column {
@@ -440,9 +465,9 @@ Panel {
         Column {
           width: parent.width
           spacing: Style.space(6)
-          // Local fork: with nothing connected the panel is just the mark and the
-          // state line. The controls below all act on a device that is not there.
-          visible: root.connected
+          // Local fork: folded behind the cog, so the panel leads with the pods
+          // and their controls rather than with settings nobody opens every day.
+          visible: root.settingsOpen
 
           PanelSectionHeader {
             width: parent.width
