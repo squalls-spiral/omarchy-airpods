@@ -294,9 +294,14 @@ Panel {
     bar: root.bar
     open: root.opened
     focusTarget: keyCatcher
-    // The floor holds the chip row inside the card. modeGroup.implicitWidth is
-    // still 0 when this first binds, so it cannot be the only source of width.
-    contentWidth: panel.fittedContentWidth(Math.max(Style.space(340), modeGroup.implicitWidth))
+    // The card is the chip row plus the card's own insets, so the row fills the
+    // content area exactly and shares its left and right edge with every other
+    // section. modeGroup.implicitWidth is 0 on the first bind, hence the floor.
+    // padding * 2 is the card's inner inset; the extra 4 is its border.
+    // The floor is only reached on a model with no listening modes at all, where
+    // the row is empty; it keeps the settings rows from being squeezed.
+    contentWidth: panel.fittedContentWidth(
+      Math.max(Style.space(240), modeGroup.implicitWidth + panel.padding * 2 + 4))
     contentHeight: panel.fittedContentHeight(column.implicitHeight)
 
     PanelKeyCatcher {
@@ -307,6 +312,7 @@ Panel {
       onTextKey: function(text) {
         if (String(text).toLowerCase() === "s") root.settingsOpen = !root.settingsOpen
       }
+
 
       Column {
         id: column
@@ -460,11 +466,6 @@ Panel {
           width: parent.width
           spacing: Style.space(6)
           visible: root.connected
-
-          PanelSectionHeader {
-            width: parent.width
-            text: "Controls"
-          }
 
           SettingRow {
             label: "Conversation Awareness"
