@@ -413,19 +413,27 @@ Panel {
             text: "Noise control"
           }
 
-          Row {
-            id: modeGroup
-            spacing: Style.spacing.md
+          // The row is narrower than the card and left-aligned would put every
+          // spare pixel on the right of ANC. Centred, the padding matches.
+          Item {
+            width: parent.width
+            height: modeGroup.implicitHeight
 
-            Repeater {
-              model: root.modeOptions
+            Row {
+              id: modeGroup
+              anchors.horizontalCenter: parent.horizontalCenter
+              spacing: Style.spacing.md
 
-              Chip {
-                text: modelData.label
-                // `selected` is the whole state model. A cursor flag as well
-                // would latch on and light a second chip.
-                selected: modelData.value === root.mode
-                onClicked: root.setMode(modelData.value)
+              Repeater {
+                model: root.modeOptions
+
+                Chip {
+                  text: modelData.label
+                  // `selected` is the whole state model. A cursor flag as well
+                  // would latch on and light a second chip.
+                  selected: modelData.value === root.mode
+                  onClicked: root.setMode(modelData.value)
+                }
               }
             }
           }
