@@ -25,6 +25,9 @@ Panel {
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
 
   readonly property bool showBattery: setting("showBattery", true) === true
+  // Local fork: the icon stays on the bar by default, so the panel is reachable and
+  // the widget does not appear and disappear as the pods come and go.
+  readonly property bool hideWhenDisconnected: setting("hideWhenDisconnected", false) === true
   // autoPause shipped as a boolean in 0.1.0. A stored false meant never;
   // anything else meant the old one-pod rule.
   readonly property string earBehavior:
@@ -233,10 +236,10 @@ Panel {
     }
   }
 
-  // Bar.qml collapses a slot whose item is invisible, so the widget leaves the
-  // bar with the pods, as the Agents panel does when it finds no usage. IPC
-  // still opens the panel, which is how the settings stay reachable.
-  visible: connected
+  // Bar.qml collapses a slot whose item is invisible. The local fork keeps the
+  // widget on the bar unless hideWhenDisconnected is turned on, so the panel —
+  // and this settings section — stay reachable with the pods away.
+  visible: !root.hideWhenDisconnected || connected
 
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight
@@ -468,6 +471,12 @@ Panel {
             label: "Battery percent in the bar"
             checked: root.showBattery
             onToggled: root.updateSetting("showBattery", !root.showBattery)
+          }
+
+          SettingRow {
+            label: "Hide when disconnected"
+            checked: root.hideWhenDisconnected
+            onToggled: root.updateSetting("hideWhenDisconnected", !root.hideWhenDisconnected)
           }
         }
       }

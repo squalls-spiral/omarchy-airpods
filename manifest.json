@@ -20,7 +20,8 @@
     "defaultSection": "right",
     "defaults": {
       "showBattery": true,
-      "earBehavior": "One out"
+      "earBehavior": "One out",
+      "hideWhenDisconnected": false
     },
     "schema": [
       {
@@ -39,6 +40,13 @@
         ],
         "defaultValue": "One out",
         "description": "When a pod out of your ear stops the music."
+      },
+      {
+        "key": "hideWhenDisconnected",
+        "type": "boolean",
+        "label": "Hide when disconnected",
+        "defaultValue": false,
+        "description": "Take the widget off the bar while no AirPods are connected. Off by default in this fork, so the panel stays reachable."
       }
     ]
   }
