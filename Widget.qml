@@ -41,6 +41,7 @@ Panel {
   property string mode: ""
   property string deviceName: ""
   property string model: ""
+  property string modelName: ""
   property var battery: ({})
   property var charging: ({})
   // null until the device reports it, which is also what an unsupported
@@ -113,6 +114,7 @@ Panel {
     mode = connected ? (data.mode || "") : ""
     deviceName = connected ? (data.name || "") : ""
     model = connected ? (data.model || "") : ""
+    modelName = connected ? (data.model_name || "") : ""
     battery = connected && data.battery ? data.battery : ({})
     charging = connected && data.charging ? data.charging : ({})
     conversationAwareness = connected && data.ca !== undefined ? data.ca : null
@@ -300,6 +302,9 @@ Panel {
       anchors.fill: parent
       onCloseRequested: root.close()
       onTabRequested: function(direction) { root.switchPanel(direction) }
+      onTextKey: function(text) {
+        if (String(text).toLowerCase() === "s") root.settingsOpen = !root.settingsOpen
+      }
 
       Column {
         id: column
@@ -313,7 +318,11 @@ Panel {
         PanelHero {
           width: parent.width
           title: root.deviceName || "AirPods"
-          meta: root.connected ? root.model : "Not connected"
+          // The name the pair was given, then the family it belongs to, then the
+          // model number underneath — the number alone says nothing to a reader.
+          meta: root.connected
+            ? [root.modelName, root.model].filter(s => s !== "").join("\n")
+            : "Not connected"
           foreground: root.foreground
           fontFamily: root.fontFamily
           iconOpacity: root.connected ? 1.0 : 0.5

@@ -37,6 +37,21 @@ NOTIFICATIONS = HEADER + bytes([0x0F, 0x00, 0xFF, 0xFF, 0xFF, 0xFF])
 # The AirPods only report their listening mode after the feature flags are set.
 FEATURE_FLAGS = HEADER + bytes([0x4D, 0x00, 0xFF] + [0x00] * 7)
 
+# Apple's model numbers (support.apple.com/en-us/109525). The number is what the
+# AirPods report; the family name is the part a person recognises.
+MODEL_NAMES = {
+    "A1523": "AirPods", "A1722": "AirPods",
+    "A2031": "AirPods 2", "A2032": "AirPods 2",
+    "A2564": "AirPods 3", "A2565": "AirPods 3",
+    "A3050": "AirPods 4", "A3053": "AirPods 4", "A3054": "AirPods 4",
+    "A3055": "AirPods 4 (ANC)", "A3056": "AirPods 4 (ANC)", "A3057": "AirPods 4 (ANC)",
+    "A2083": "AirPods Pro", "A2084": "AirPods Pro",
+    "A2698": "AirPods Pro 2", "A2699": "AirPods Pro 2", "A2931": "AirPods Pro 2",
+    "A3047": "AirPods Pro 2", "A3048": "AirPods Pro 2", "A3049": "AirPods Pro 2",
+    "A3063": "AirPods Pro 3", "A3064": "AirPods Pro 3", "A3065": "AirPods Pro 3",
+    "A2096": "AirPods Max", "A3184": "AirPods Max",
+}
+
 MODES = {"off": 0x01, "anc": 0x02, "transparency": 0x03, "adaptive": 0x04}
 MODE_NAMES = {v: k for k, v in MODES.items()}
 COMPONENTS = {0x01: "headphone", 0x02: "right", 0x04: "left", 0x08: "case"}
@@ -120,6 +135,7 @@ def parse(packet, state):
             state["name"] = fields[0]
         if len(fields) > 1:
             state["model"] = fields[1]
+            state["model_name"] = MODEL_NAMES.get(fields[1], "")
 
     elif opcode == OP_CONTROL and len(payload) >= 7:
         identifier = payload[2]
@@ -249,7 +265,7 @@ def own(server):
                 sock.send(NOTIFICATIONS)
                 sock.settimeout(None)
                 state = {"connected": True, "address": address, "name": None,
-                         "model": None, "mode": None, "battery": {}, "charging": {},
+                         "model": None, "model_name": None, "mode": None, "battery": {}, "charging": {},
                          "ear": None, "ca": None, "onebud": None, "adaptive_level": None}
                 while True:
                     # Read the file descriptor, not sys.stdin: a buffered read
